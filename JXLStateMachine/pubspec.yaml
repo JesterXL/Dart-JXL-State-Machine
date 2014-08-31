@@ -1,0 +1,6 @@
+name: JXLStateMachine
+description: A pub package
+dependencies:
+  frappe: any
+  polymer: any
+  unittest: any
