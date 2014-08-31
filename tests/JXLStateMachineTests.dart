@@ -24,6 +24,11 @@ void main()
 			expect(fsm.currentState, defaultState);
 		});
 		
+		test('can add multiple states and make the 1st current', ()
+		{
+			
+		});
+		
 	});
 
 }
