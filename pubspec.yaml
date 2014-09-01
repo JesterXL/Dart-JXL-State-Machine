@@ -1,6 +1,16 @@
-name: JXLStateMachine
-description: A pub package
+name: jxlstatemachine
+version: 0.1.0
+author: Jesse Warden
+description: |-
+  A hierarchical finite state machine with support parent child relationships and transition enforcement.
+
+  Based on Cássio Souza's ActionScript 3 one https://github.com/cassiozen/AS3-State-Machine which I ported to Lua with some modifications https://github.com/JesterXL/Lua-Corona-SDK-State-Machine that I've incorporated into the Dart one.
+
+  There are existing state machines in Dart pub, but the Game ones had too many dependencies and the others were too hard to learn quickly.
+homepage: https://github.com/JesterXL/Dart-JXL-State-Machine
+environment:
+  sdk: 1.5.8
+documentation: https://github.com/JesterXL/Dart-JXL-State-Machine
 dependencies:
-  frappe: any
   polymer: any
   unittest: any
