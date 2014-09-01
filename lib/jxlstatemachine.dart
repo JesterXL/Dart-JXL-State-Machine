@@ -6,7 +6,7 @@ import 'package:observe/observe.dart';
 class State
 {
 	String _name;
-	Object _from;
+	List<String> _from;
 	Function _enter;
 	Function _exit;
 	State _parent;
@@ -15,7 +15,7 @@ class State
 	Stream _changes;
 	
 	String get name => _name;
-	State get from => _from;
+	List<String> get from => _from;
 	Function get enter => _enter;
 	Function get exit => _exit;
 	State get parent => _parent;
@@ -62,47 +62,6 @@ class State
 		return parents;
 	}
 	
-	// TODO: support String states
-	bool inFrom(String stateName)
-	{
-		if(from == null)
-		{
-			if(parent != null)
-			{
-				return parent.name == stateName;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		
-		if(from is String)
-		{
-			if(from == stateName)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-//		 NOTE: Below, you need to loop through children list; Lua was just
-//		 using a simple table
-		else if(from is State && from.children != null)
-		{
-			from.children.forEach((currentChild)
-			{
-				if(currentChild.name == stateName)
-				{
-					return true;
-				}
-			});
-		}
-		return false;
-	}
-	
 	bool isParentState(String stateName)
 	{
 		List<State> currentParents = parents;
@@ -119,16 +78,17 @@ class State
 		return false;
 	}
 	
-	State(String this._name, {Object from: null, 
+	State(String this._name, {List<String> from: null, 
 						Function enter: null, 
 						Function exit:null, 
 						State parent:null})
 	{
 		_name = name;
 		// NOTE: We set it to * to ensure it's never null. * means "from anywhere"
-		if(from != null)
+		if(from == null)
 		{
-			_from = "*";
+			_from = new List<String>();
+			_from.add("*");
 		}
 		else
 		{
@@ -151,7 +111,7 @@ class StateMachine
 	State _currentState;
 	State _currentParentState;
 	List<State> _currentParentStates;
-	StreamController _streamController = new StreamController.broadcast();
+	StreamController _streamController = new StreamController.broadcast(sync: true);
 	Stream _changes;
 	
 	State get currentState => _currentState;
@@ -199,11 +159,12 @@ class StateMachine
 	// NOTE: I'm aware the map is flat, and I don't support multiple states of the same name.
 	// TODO: fix if you care, I don't. I believe Dart Map throws error if you attempt set
 	// an already existing State.
-	State addState(String stateName, {Object from: null, 
+	State addState(String stateName, {List<String> from: null, 
 										Function enter: null, 
 										Function exit:null, 
 										State parent:null})
 	{
+		
 		State newState = new State(stateName,
 									from: from,
 									enter: enter,
@@ -215,7 +176,7 @@ class StateMachine
 	
 	bool canChangeStateTo(String stateName)
 	{
-		State state = states[stateName];
+		State targetToState = states[stateName];
 		int score = 0;
 		int win = 2;
 		
@@ -224,23 +185,21 @@ class StateMachine
 			score++;
 		}
 		
-		if(state.inFrom(currentState.name) == true)
+		// NOTE: Lua via State.inFrom was walking up one parent if from was null... why?
+		if(targetToState.from != null)
 		{
-			score++;
-		}
-		else
-		{
-			State childState = states[currentState.name];
-			if(childState != null && childState.parent != null)
+			if(targetToState.from.contains(_currentState.name) == true)
 			{
-				if(childState.parent.name == stateName)
-				{
-					score++;
-				}
+				score++;
+			}
+			
+			if(targetToState.from.contains("*") == true)
+			{
+				score++;
 			}
 		}
 		
-		if(state.from == "*")
+		if(targetToState.from == null)
 		{
 			score++;
 		}
@@ -259,13 +218,13 @@ class StateMachine
 	List<int> findPath(String stateFrom, String stateTo)
 	{
 		State fromState = states[stateFrom];
-		State toState = states[stateTo];
 		int c = 0;
 		int d = 0;
 		List<int> path = new List<int>();
 		while(fromState != null)
 		{
 			d = 0;
+			State toState = states[stateTo];
 			while(toState != null)
 			{
 				if(fromState == toState)
@@ -284,12 +243,15 @@ class StateMachine
 		path.add(d);
 		return path;
 	}
-	
-	bool changeState(String stateName)
+
+	Future changeState(String stateName)
 	{
+		Completer completer = new Completer();
 		if(canChangeStateTo(stateName) == false)
 		{
-			throw "Boom, you no can change, sucka!";
+			_streamController.add(new StateMachineEvent(StateMachineEvent.TRANSITION_DENIED));
+			completer.complete(false);
+			return completer.future;
 		}
 		
 		List<int> path = findPath(_currentState.name, stateName);
@@ -311,7 +273,7 @@ class StateMachine
 			while(p < path[0])
 			{
 				_currentParentState	= _currentParentState.parent;
-				if(_currentParentState.exit != null)
+				if(_currentParentState != null && _currentParentState.exit != null)
 				{
 					// exitCallback.currentState = _currentParentState.parentState.name;
 					_currentParentState.exit(exitCallback);
@@ -361,7 +323,9 @@ class StateMachine
 //        							fromState = oldState,
 //        							toState = stateTo}
 //        		self:dispatchEvent(outEvent)
-		return true;
+		_streamController.add(new StateMachineEvent(StateMachineEvent.TRANSITION_COMPLETE));
+		completer.complete(true);
+		return completer.future;
 	}
 	
 }
