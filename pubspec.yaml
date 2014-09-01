@@ -1,5 +1,5 @@
 name: jxlstatemachine
-version: 0.1.0
+version: 0.1.2
 author: Jesse Warden <jesterxl@jessewarden.com>
 description: |-
   A hierarchical finite state machine with support parent child relationships and transition enforcement.

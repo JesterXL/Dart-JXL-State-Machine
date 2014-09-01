@@ -144,6 +144,67 @@ void main()
 			fsm.changeState('fire2').then(callback);
 			expect(called, true);
 		});
+		
+		test('individual state gets enter callback', ()
+		{
+			bool called = false;
+			Function onEnter = ()
+			{
+				called = true;
+			};
+			fsm.addState('main', enter: onEnter);
+			fsm.initialState = 'main';
+			expect(called, true);
+		});
+		
+		test('parent states work', ()
+		{
+			fsm.addState('main');
+			fsm.addState('child1', parent: 'main');
+			fsm.addState('child2', parent: 'main');
+			fsm.initialState = 'child1';
+			expect(fsm.currentState.name, 'child1');
+		});
+		
+		test('child state can go to sibling', ()
+		{
+			fsm.addState('main');
+			fsm.addState('child1', parent: 'main');
+			fsm.addState('child2', parent: 'main');
+			fsm.initialState = 'child1';
+			fsm.changeState('child2');
+			expect(fsm.currentState.name, 'child2');
+		});
+		
+		test('child state enter callback is called', ()
+		{
+			bool called = false;
+			fsm.addState("main");
+    		fsm.addState("defense", from: ["main"], 
+    			enter: ()
+    			{
+    				called = true;
+    			});
+    		fsm.addState("row", from: ["main"]);
+    		fsm.initialState = 'defense';
+    		expect(called, true);
+		});
+		
+		test('child state exit callback is called', ()
+		{
+			bool called = false;
+			fsm.addState("main");
+    		fsm.addState("defense", parent: 'main', 
+    			exit: ()
+    			{
+    				called = true;
+    			});
+    		fsm.addState("row", parent: 'main');
+    		fsm.initialState = 'defense';
+    		fsm.changeState('row');
+    		expect(called, true);
+		});
+		
 	});
 
 }

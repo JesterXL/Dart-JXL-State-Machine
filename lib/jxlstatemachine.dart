@@ -56,7 +56,14 @@ class State
 			while(currentParentState != null)
 			{
 				currentParentState = currentParentState.parent;
-				parents.add(currentParentState);
+				if(currentParentState != null)
+				{
+					parents.add(currentParentState);
+				}
+				else
+				{
+					break;
+				}
 			}
 		}
 		return parents;
@@ -142,7 +149,7 @@ class StateMachine
 		if(initial.enter != null)
 		{
 			// TODO: make event class
-			initial.enter({});
+			initial.enter();
 		}
 		
 		// TODO: dispatch transition complete... man... these should all be streams, eff me
@@ -162,14 +169,18 @@ class StateMachine
 	State addState(String stateName, {List<String> from: null, 
 										Function enter: null, 
 										Function exit:null, 
-										State parent:null})
+										String parent:null})
 	{
-		
+		State parentState = null;
+		if(parent != null)
+		{
+			parentState = states[parent];
+		}
 		State newState = new State(stateName,
 									from: from,
 									enter: enter,
 									exit: exit,
-									parent: parent);
+									parent: parentState);
 		states[stateName] = newState;
 		return newState;
 	}
@@ -194,6 +205,14 @@ class StateMachine
 			}
 			
 			if(targetToState.from.contains("*") == true)
+			{
+				score++;
+			}
+		}
+		
+		if(currentState != null && currentState.parent != null)
+		{
+			if(currentState.parent.name == stateName)
 			{
 				score++;
 			}
@@ -276,7 +295,7 @@ class StateMachine
 				if(_currentParentState != null && _currentParentState.exit != null)
 				{
 					// exitCallback.currentState = _currentParentState.parentState.name;
-					_currentParentState.exit(exitCallback);
+					_currentParentState.exit();
 				}
 				p++;
 			}
@@ -305,16 +324,16 @@ class StateMachine
 					if(theCurrentParentState != null && theCurrentParentState.enter != null)
 					{
 						// enterCallback.currentState = theCurrentParentState.name;
-						theCurrentParentState.enter(enterCallback);
+						theCurrentParentState.enter();
 					}
-					k++;
+					k--;
 				}
 			}
 			
 			if(toState.enter != null)
 			{
 				// enterCallback.currentState = toState.name;
-				toState.enter(enterCallback);
+				toState.enter();
 			}
 		}
 		
