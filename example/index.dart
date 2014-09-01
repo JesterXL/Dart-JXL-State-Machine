@@ -3,7 +3,7 @@ library examplejxlstatemachine;
 import 'dart:html';
 import 'dart:async';
 
-import 'package:JXLStateMachine/jxlstatemachine.dart';
+import 'package:jxlstatemachine/jxlstatemachine.dart';
 
 void main()
 {

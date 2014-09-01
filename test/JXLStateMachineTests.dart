@@ -3,7 +3,7 @@ library statemachine_test;
 import 'dart:async';
 
 import 'package:unittest/unittest.dart';
-import 'package:JXLStateMachine/jxlstatemachine.dart';
+import 'package:jxlstatemachine/jxlstatemachine.dart';
 
 void main()
 {
